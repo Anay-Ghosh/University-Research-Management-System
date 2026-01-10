@@ -1,0 +1,25 @@
+﻿@model List<LifeNetAssist.MVC.Models.HelpRequest>
+
+<h2>Assigned /Completed Tasks</h2>
+
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Requester Name</th>
+            <th>Request Type</th>
+            <th>Location</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.RequesterName</td>
+                <td>@r.RequestType</td>
+                <td>@r.Location</td>
+                <td>@r.Status</td>
+            </tr>
+        }
+    </tbody>
+</table>

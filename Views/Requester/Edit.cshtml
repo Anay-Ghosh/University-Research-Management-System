@@ -1,0 +1,104 @@
+﻿@model LifeNetAssist.MVC.Models.HelpRequest
+
+@{
+    ViewData["Title"] = "Edit Help Request";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4" style="color: #2c3e50;">Edit Help Request</h2>
+
+    <!-- Success/Error Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Form Card -->
+    <div class="card shadow-sm rounded p-4 mx-auto" style="max-width: 600px; background-color: #ffffff;">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RequesterId" />
+
+            <div class="mb-3">
+                <label asp-for="RequestType" class="form-label fw-semibold">Request Type</label>
+                <input asp-for="RequestType" class="form-control shadow-sm" placeholder="Enter request type" />
+                <span asp-validation-for="RequestType" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Location" class="form-label fw-semibold">Location</label>
+                <input asp-for="Location" class="form-control shadow-sm" placeholder="Enter location" />
+                <span asp-validation-for="Location" class="text-danger small"></span>
+            </div>
+
+            <div class="row">
+                <div class="col mb-3">
+                    <label asp-for="Latitude" class="form-label fw-semibold">Latitude</label>
+                    <input asp-for="Latitude" type="number" step="any" class="form-control shadow-sm" placeholder="e.g., 23.8103" />
+                    <span asp-validation-for="Latitude" class="text-danger small"></span>
+                </div>
+                <div class="col mb-3">
+                    <label asp-for="Longitude" class="form-label fw-semibold">Longitude</label>
+                    <input asp-for="Longitude" type="number" step="any" class="form-control shadow-sm" placeholder="e.g., 90.4125" />
+                    <span asp-validation-for="Longitude" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="RequesterName" class="form-label fw-semibold">Requester Name</label>
+                <input asp-for="RequesterName" class="form-control shadow-sm" placeholder="Enter requester name" />
+                <span asp-validation-for="RequesterName" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Contact" class="form-label fw-semibold">Contact</label>
+                <input asp-for="Contact" class="form-control shadow-sm" placeholder="Enter contact number" />
+                <span asp-validation-for="Contact" class="text-danger small"></span>
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary shadow-sm w-50">
+                    <i class="bi bi-pencil-square"></i> Update
+                </button>
+                <a asp-action="Dashboard" class="btn btn-secondary shadow-sm w-45">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Optional Styling -->
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(to right, #f0f9f0, #ffffff);
+    }
+
+    h2 {
+        font-weight: 600;
+    }
+
+    .form-control {
+        border-radius: 0.35rem;
+    }
+
+    .btn {
+        border-radius: 0.35rem;
+        font-weight: 500;
+    }
+</style>
+
+<!-- Bootstrap Icons CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">

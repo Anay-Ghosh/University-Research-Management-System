@@ -1,0 +1,98 @@
+﻿@model LifeNetAssist.MVC.Models.HelpRequest
+
+@{
+    ViewData["Title"] = "Create Help Request";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4" style="color: #2c3e50;">Create Help Request</h2>
+
+    <!-- Success/Error Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Form Card -->
+    <div class="card shadow-sm rounded p-4 mx-auto" style="max-width: 600px; background-color: #ffffff;">
+        <form asp-action="Create" method="post">
+            <div class="mb-3">
+                <label asp-for="RequestType" class="form-label fw-semibold">Request Type</label>
+                <input asp-for="RequestType" class="form-control shadow-sm" placeholder="Enter request type" />
+                <span asp-validation-for="RequestType" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Location" class="form-label fw-semibold">Location</label>
+                <input asp-for="Location" class="form-control shadow-sm" placeholder="Enter location" />
+                <span asp-validation-for="Location" class="text-danger small"></span>
+            </div>
+
+            <div class="row">
+                <div class="col mb-3">
+                    <label asp-for="Latitude" class="form-label fw-semibold">Latitude</label>
+                    <input asp-for="Latitude" class="form-control shadow-sm" type="number" step="any" placeholder="e.g., 23.8103" />
+                    <span asp-validation-for="Latitude" class="text-danger small"></span>
+                </div>
+                <div class="col mb-3">
+                    <label asp-for="Longitude" class="form-label fw-semibold">Longitude</label>
+                    <input asp-for="Longitude" class="form-control shadow-sm" type="number" step="any" placeholder="e.g., 90.4125" />
+                    <span asp-validation-for="Longitude" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="RequesterName" class="form-label fw-semibold">Requester Name</label>
+                <input asp-for="RequesterName" class="form-control shadow-sm" placeholder="Enter your name" />
+                <span asp-validation-for="RequesterName" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Contact" class="form-label fw-semibold">Contact</label>
+                <input asp-for="Contact" class="form-control shadow-sm" placeholder="Enter contact number" />
+                <span asp-validation-for="Contact" class="text-danger small"></span>
+            </div>
+
+            <!-- Hidden Status -->
+            <input asp-for="Status" type="hidden" value="Pending" />
+
+            <button type="submit" class="btn btn-primary w-100 shadow-sm mt-3">
+                <i class="bi bi-plus-circle"></i> Create Request
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Optional Styling -->
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(to right, #f0f9f0, #ffffff);
+    }
+
+    h2 {
+        font-weight: 600;
+    }
+
+    .form-control {
+        border-radius: 0.35rem;
+    }
+
+    .btn {
+        border-radius: 0.35rem;
+        font-weight: 500;
+    }
+</style>
+
+<!-- Bootstrap Icons CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">

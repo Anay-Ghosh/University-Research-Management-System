@@ -1,0 +1,29 @@
+﻿@model LifeNetAssist.MVC.Models.VolunteerProfile
+
+<h2>Edit My Profile</h2>
+
+<form asp-action="EditProfile" method="post">
+    <div class="mb-3">
+        <label class="form-label">Contact</label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input asp-for="Location" class="form-control" />
+        <span asp-validation-for="Location" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Latitude</label>
+        <input asp-for="Latitude" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Longitude</label>
+        <input asp-for="Longitude" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>

@@ -1,0 +1,207 @@
+﻿@model LifeNetAssist.MVC.Models.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid mt-4 admin-dashboard">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="dashboard-title">Admin Dashboard</h2>
+        <span class="text-muted small">LifeNet Assist • Control Panel</span>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+            <a asp-action="Requests" class="dashboard-link">
+                <div class="dashboard-card">
+                    <div class="icon bg-primary">
+                        <i class="bi bi-clipboard-data"></i>
+                    </div>
+                    <div>
+                        <p class="label">Total Requests</p>
+                        <h3>@Model.TotalRequests</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a asp-action="Requests" asp-route-status="Pending" class="dashboard-link">
+                <div class="dashboard-card">
+                    <div class="icon bg-warning text-dark">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div>
+                        <p class="label">Pending Requests</p>
+                        <h3>@Model.PendingRequests</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a asp-action="Requests" asp-route-status="Completed" class="dashboard-link">
+                <div class="dashboard-card">
+                    <div class="icon bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <p class="label">Completed Requests</p>
+                        <h3>@Model.CompletedRequests</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Volunteers & Distance Panel -->
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <a asp-action="Volunteers" class="dashboard-link">
+                <div class="dashboard-card">
+                    <div class="icon bg-secondary">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div>
+                        <p class="label">Total Volunteers</p>
+                        <h3>@Model.TotalVolunteers</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-8">
+            <div class="dashboard-panel">
+                <h6 class="panel-title text-center">
+                    Closest Volunteers to Pending Requests
+                </h6>
+
+                @if (Model.ClosestVolunteers.Any())
+                {
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Requester</th>
+                                    <th>Volunteer</th>
+                                    <th class="text-end">Distance (km)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.ClosestVolunteers)
+                                {
+                                    <tr>
+                                        <td>@item.RequesterName</td>
+                                        <td>@item.VolunteerName</td>
+                                        <td class="text-end fw-semibold">
+                                            @item.DistanceKm
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center small mt-4">
+                        No pending requests available
+                    </p>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===================== -->
+<!-- Dashboard Styling -->
+<!-- ===================== -->
+<style>
+    body {
+        background-color: #f6f8fb;
+    }
+
+    .admin-dashboard {
+        font-family: 'Inter', 'Poppins', sans-serif;
+    }
+
+    .dashboard-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .dashboard-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .dashboard-card {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        border: 1px solid #e6e9ef;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+
+        .dashboard-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+        }
+
+        .dashboard-card h3 {
+            margin: 0;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+    .label {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+
+    .icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+
+    .dashboard-panel {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid #e6e9ef;
+        height: 100%;
+    }
+
+    .panel-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    table thead th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        border-bottom: 1px solid #dee2e6;
+    }
+</style>
