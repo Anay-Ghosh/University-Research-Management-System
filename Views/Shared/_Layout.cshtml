@@ -1,116 +1,184 @@
-﻿<!DOCTYPE html>
+﻿@using LifeNetAssist.MVC.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext DbContext
+@{
+    var role = Context.Session.GetString("UserRole");
+    var userName = Context.Session.GetString("UserName");
+    var myId = Context.Session.GetInt32("UserId");
+
+    int unreadNotifications = 0;
+    if (myId != null)
+    {
+        unreadNotifications = DbContext.Notifications.Count(n => n.UserId == myId && !n.IsRead);
+    }
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - LifeNet Assist</title>
+    <title>@ViewData["Title"] - URMS</title>
 
-    <!-- Bootstrap -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/LifeNetAssist.MVC.styles.css" asp-append-version="true" />
 
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to right, #f0fff0, #e0f7e9);
+            font-family: ''Poppins'', sans-serif;
+            background: linear-gradient(to right, #eef2fa, #f7f9ff);
             min-height: 100vh;
         }
 
-        /* Navbar */
         .navbar {
-            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
         }
 
         .navbar-brand {
-            font-weight: 600;
-            font-size: 1.5rem;
-            color: #28a745 !important;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #1e3a5f !important;
+            letter-spacing: 0.5px;
         }
 
         .nav-link {
             color: #2c3e50 !important;
             font-weight: 500;
-            transition: color 0.2s;
         }
 
-            .nav-link:hover, .nav-link.active {
-                color: #28a745 !important;
-            }
+        .nav-link:hover {
+            color: #2563eb !important;
+        }
 
-        /* Footer */
         footer {
             background-color: #f8f9fa;
             padding: 20px 0;
             font-size: 0.9rem;
         }
 
-            footer a {
-                color: #28a745;
-                text-decoration: none;
-            }
-
-                footer a:hover {
-                    text-decoration: underline;
-                }
-
-        /* Main content spacing */
         main {
-            padding-top: 40px;
+            padding-top: 30px;
             padding-bottom: 40px;
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     <header>
         <nav class="navbar navbar-expand-lg navbar-light bg-white">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">LifeNet Assist</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">URMS</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav ms-auto align-items-lg-center">
                         <li class="nav-item">
-                            <a class="nav-link @(ViewData["Title"]?.ToString() == "Home Page" ? "active" : "")" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewData["Title"]?.ToString() == "Privacy" ? "active" : "")" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        <!-- Removed Login/Register buttons -->
+
+                        @if (role == "Student")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Student" asp-action="Dashboard">My Research</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Student" asp-action="SubmitProposal">New Proposal</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Student" asp-action="Publications">Publications</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Message" asp-action="Inbox">Messages</a>
+                            </li>
+                        }
+                        else if (role == "Supervisor")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Supervisor" asp-action="Dashboard">My Students</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Supervisor" asp-action="Available">Browse Proposals</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Supervisor" asp-action="Publications">Publications</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Message" asp-action="Inbox">Messages</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Supervisor" asp-action="Profile">Profile</a>
+                            </li>
+                        }
+                        else if (role == "Admin")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Admin" asp-action="Dashboard">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Admin" asp-action="Users">Users</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Admin" asp-action="Proposals">Proposals</a>
+                            </li>
+                        }
+
+                        @if (role == null)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="User" asp-action="Login">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-primary btn-sm ms-lg-2" asp-controller="User" asp-action="Register">Register</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link fw-semibold" asp-controller="Assistant" asp-action="Chat">AI Assistant</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link position-relative" asp-controller="Notification" asp-action="Index" title="Notifications">
+                                    Alerts
+                                    @if (unreadNotifications > 0)
+                                    {
+                                        <span class="badge bg-danger rounded-pill">@unreadNotifications</span>
+                                    }
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link text-muted">@userName (@role)</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-outline-secondary btn-sm ms-lg-2" asp-controller="User" asp-action="Logout">Logout</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- Main content -->
     <main role="main" class="container">
         @RenderBody()
     </main>
 
-    <!-- Footer -->
     <footer class="text-center text-muted border-top">
-        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
-            <span>&copy; 2026 LifeNet Assist</span>
-            <span>
-                <a href="#" class="me-3"><i class="bi bi-facebook"></i> Facebook</a>
-                <a href="#" class="me-3"><i class="bi bi-twitter"></i> Twitter</a>
-                <a href="#"><i class="bi bi-instagram"></i> Instagram</a>
-            </span>
+        <div class="container">
+            <span>&copy; 2026 University Research Management System</span>
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
+
+
+
+

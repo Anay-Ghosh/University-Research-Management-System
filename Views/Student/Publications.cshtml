@@ -1,0 +1,62 @@
+﻿@model List<LifeNetAssist.MVC.Models.Publication>
+
+@{
+    ViewData["Title"] = "My Publications";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Publications</h2>
+        <a asp-action="AddPublication" class="btn btn-primary">+ Add Publication</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">You have not recorded any publication yet.</div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Venue</th>
+                    <th>Year</th>
+                    <th>Related Research</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>
+                        @p.Title
+                        @if (!string.IsNullOrEmpty(p.Url))
+                        {
+                            <a href="@p.Url" target="_blank" class="ms-2 small">link</a>
+                        }
+                        <div class="text-muted small">@p.Authors</div>
+                    </td>
+                    <td>@(string.IsNullOrEmpty(p.Type) ? "-" : p.Type)</td>
+                    <td>@(string.IsNullOrEmpty(p.Venue) ? "-" : p.Venue)</td>
+                    <td>@(p.Year.HasValue ? p.Year.ToString() : "-")</td>
+                    <td>@(p.Proposal != null ? p.Proposal.Title : "-")</td>
+                    <td>
+                        <form asp-action="DeletePublication" method="post" onsubmit="return confirm(''Remove this publication?'');">
+                            <input type="hidden" name="id" value="@p.Id" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>

@@ -1,0 +1,81 @@
+﻿@{
+    ViewData["Title"] = "AI Research Assistant";
+}
+
+<div class="container mt-4" style="max-width: 800px;">
+    <h2 class="mb-3">AI Research Assistant</h2>
+    <p class="text-muted">Ask about methodology, literature review, citations, or how to use URMS.</p>
+
+    <div class="card shadow-sm bg-white">
+        <div class="card-body" id="aiBox" style="height: 460px; overflow-y: auto; background:#f8f9fb;">
+            <div class="d-flex justify-content-start mb-2">
+                <div class="p-2 px-3 rounded-3 bg-white border" style="max-width: 80%;">
+                    Hello! I can help you plan your research, refine your abstract, or explain how to use this system. What are you working on?
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer bg-white">
+            <div class="d-flex gap-2">
+                <input id="aiInput" class="form-control" placeholder="Ask something..." autocomplete="off" />
+                <button id="aiSend" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var box = document.getElementById("aiBox");
+        var input = document.getElementById("aiInput");
+        var sendBtn = document.getElementById("aiSend");
+
+        function addBubble(text, mine) {
+            var wrap = document.createElement("div");
+            wrap.className = "d-flex mb-2 " + (mine ? "justify-content-end" : "justify-content-start");
+
+            var bubble = document.createElement("div");
+            bubble.className = "p-2 px-3 rounded-3 " + (mine ? "bg-primary text-white" : "bg-white border");
+            bubble.style.maxWidth = "80%";
+            bubble.style.whiteSpace = "pre-wrap";
+            bubble.textContent = text;
+
+            wrap.appendChild(bubble);
+            box.appendChild(wrap);
+            box.scrollTop = box.scrollHeight;
+            return bubble;
+        }
+
+        async function send() {
+            var msg = input.value.trim();
+            if (!msg) return;
+
+            addBubble(msg, true);
+            input.value = "";
+            sendBtn.disabled = true;
+
+            var thinking = addBubble("Thinking...", false);
+
+            try {
+                var res = await fetch("/Assistant/Ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: msg })
+                });
+                var data = await res.json();
+                thinking.textContent = data.reply;
+            } catch (e) {
+                thinking.textContent = "Could not reach the assistant. Please try again.";
+            }
+
+            sendBtn.disabled = false;
+            box.scrollTop = box.scrollHeight;
+            input.focus();
+        }
+
+        sendBtn.addEventListener("click", send);
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") { e.preventDefault(); send(); }
+        });
+    </script>
+}

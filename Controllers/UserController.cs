@@ -1,6 +1,6 @@
-﻿
-using LifeNetAssist.MVC.Data;
+﻿using LifeNetAssist.MVC.Data;
 using LifeNetAssist.MVC.Models;
+using LifeNetAssist.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LifeNetAssist.MVC.Controllers
@@ -14,68 +14,72 @@ namespace LifeNetAssist.MVC.Controllers
             _context = context;
         }
 
-        // GET: /User/Register
         public IActionResult Register()
         {
             return View();
         }
 
-        // POST: /User/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Register(User user)
         {
+            if (_context.Users.Any(u => u.Email == user.Email))
+            {
+                TempData["Error"] = "This email is already registered.";
+                return View(user);
+            }
+
             if (ModelState.IsValid)
             {
+                // never store the raw password
+                user.Password = PasswordHasher.Hash(user.Password);
+
                 _context.Users.Add(user);
                 _context.SaveChanges();
-                TempData["Success"] = "Registration successful!";
+                TempData["Success"] = "Registration successful! Please log in.";
                 return RedirectToAction("Login");
             }
             return View(user);
         }
 
-        // GET: /User/Login
         public IActionResult Login()
         {
             return View();
         }
 
-        // POST: /User/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Login(string email, string password)
         {
-            var user = _context.Users
-                .FirstOrDefault(u => u.Email == email && u.Password == password);
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
 
-            if (user != null)
+            if (user != null && PasswordHasher.Verify(password, user.Password))
             {
-                // store user info in session
                 HttpContext.Session.SetInt32("UserId", user.Id);
                 HttpContext.Session.SetString("UserRole", user.Role);
+                HttpContext.Session.SetString("UserName", user.Name);
 
-                // redirect based on role
                 if (user.Role == "Admin")
                     return RedirectToAction("Dashboard", "Admin");
-                else if (user.Role == "Requester")
-                    return RedirectToAction("Dashboard", "Requester");
-                else
-                {
-                    // Volunteer: if they don't have a VolunteerProfile yet, send them to create/edit it
-                    var profile = _context.VolunteerProfiles.FirstOrDefault(v => v.UserId == user.Id);
-                    if (profile == null)
-                    {
-                        TempData["Success"] = "Please complete your volunteer profile.";
-                        return RedirectToAction("Dashboard", "Volunteer");
-                    }
 
-                    return RedirectToAction("Dashboard", "Volunteer");
-                }
+                if (user.Role == "Student")
+                    return RedirectToAction("Dashboard", "Student");
+
+                var profile = _context.SupervisorProfiles.FirstOrDefault(s => s.UserId == user.Id);
+                if (profile == null)
+                    TempData["Success"] = "Please complete your supervisor profile.";
+
+                return RedirectToAction("Dashboard", "Supervisor");
             }
 
             TempData["Error"] = "Invalid email or password";
             return View();
+        }
+
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Index", "Home");
         }
     }
 }

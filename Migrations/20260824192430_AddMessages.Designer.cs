@@ -4,6 +4,7 @@ using LifeNetAssist.MVC.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeNetAssist.MVC.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260824192430_AddMessages")]
+    partial class AddMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,40 +61,6 @@ namespace LifeNetAssist.MVC.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Messages");
-                });
-
-            modelBuilder.Entity("LifeNetAssist.MVC.Models.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Link")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("LifeNetAssist.MVC.Models.ProgressUpdate", b =>
@@ -190,46 +159,6 @@ namespace LifeNetAssist.MVC.Migrations
                     b.ToTable("Publications");
                 });
 
-            modelBuilder.Entity("LifeNetAssist.MVC.Models.ResearchDocument", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Category")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProposalId")
-                        .HasColumnType("int");
-
-                    b.Property<long>("SizeBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("StoredName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UploadedById")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProposalId");
-
-                    b.HasIndex("UploadedById");
-
-                    b.ToTable("ResearchDocuments");
-                });
-
             modelBuilder.Entity("LifeNetAssist.MVC.Models.ResearchProposal", b =>
                 {
                     b.Property<int>("Id")
@@ -242,12 +171,6 @@ namespace LifeNetAssist.MVC.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("DeadlineResolved")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("DeadlineTask")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Feedback")
                         .HasColumnType("nvarchar(max)");
 
@@ -256,9 +179,6 @@ namespace LifeNetAssist.MVC.Migrations
 
                     b.Property<string>("Keywords")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ReviewDeadline")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -284,48 +204,6 @@ namespace LifeNetAssist.MVC.Migrations
                     b.HasIndex("SupervisorId");
 
                     b.ToTable("ResearchProposals");
-                });
-
-            modelBuilder.Entity("LifeNetAssist.MVC.Models.Review", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("Deadline")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Feedback")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProposalId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Resolved")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("SupervisorId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Task")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProposalId");
-
-                    b.HasIndex("SupervisorId");
-
-                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("LifeNetAssist.MVC.Models.SupervisorProfile", b =>
@@ -428,17 +306,6 @@ namespace LifeNetAssist.MVC.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("LifeNetAssist.MVC.Models.Notification", b =>
-                {
-                    b.HasOne("LifeNetAssist.MVC.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("LifeNetAssist.MVC.Models.ProgressUpdate", b =>
                 {
                     b.HasOne("LifeNetAssist.MVC.Models.ResearchProposal", "Proposal")
@@ -467,25 +334,6 @@ namespace LifeNetAssist.MVC.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("LifeNetAssist.MVC.Models.ResearchDocument", b =>
-                {
-                    b.HasOne("LifeNetAssist.MVC.Models.ResearchProposal", "Proposal")
-                        .WithMany()
-                        .HasForeignKey("ProposalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LifeNetAssist.MVC.Models.User", "UploadedBy")
-                        .WithMany()
-                        .HasForeignKey("UploadedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Proposal");
-
-                    b.Navigation("UploadedBy");
-                });
-
             modelBuilder.Entity("LifeNetAssist.MVC.Models.ResearchProposal", b =>
                 {
                     b.HasOne("LifeNetAssist.MVC.Models.User", "Student")
@@ -500,25 +348,6 @@ namespace LifeNetAssist.MVC.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Student");
-
-                    b.Navigation("Supervisor");
-                });
-
-            modelBuilder.Entity("LifeNetAssist.MVC.Models.Review", b =>
-                {
-                    b.HasOne("LifeNetAssist.MVC.Models.ResearchProposal", "Proposal")
-                        .WithMany()
-                        .HasForeignKey("ProposalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LifeNetAssist.MVC.Models.User", "Supervisor")
-                        .WithMany()
-                        .HasForeignKey("SupervisorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Proposal");
 
                     b.Navigation("Supervisor");
                 });

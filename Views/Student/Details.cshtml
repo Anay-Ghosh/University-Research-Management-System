@@ -1,0 +1,260 @@
+﻿@model LifeNetAssist.MVC.Models.ResearchProposal
+
+@{
+    ViewData["Title"] = "Proposal Details";
+}
+
+<div class="container mt-4" style="max-width: 900px;">
+    <a asp-action="Dashboard" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm p-4 mb-4 bg-white">
+        <h3>@Model.Title</h3>
+        <p class="text-muted mb-2">
+            Status: <span class="badge bg-secondary">@Model.Status</span>
+            &nbsp;|&nbsp; Submitted: @Model.SubmittedAt.ToString("dd MMM yyyy")
+        </p>
+        <p><strong>Supervisor:</strong> @(Model.Supervisor != null ? Model.Supervisor.Name : "Not assigned yet")</p>
+        <p><strong>Keywords:</strong> @(string.IsNullOrEmpty(Model.Keywords) ? "-" : Model.Keywords)</p>
+        <hr />
+        <h6>Abstract</h6>
+        <p>@Model.Abstract</p>
+
+        @if (!string.IsNullOrEmpty(Model.Feedback))
+        {
+            <div class="alert alert-warning mt-3 mb-0">
+                <strong>Supervisor Feedback:</strong><br />@Model.Feedback
+            </div>
+        }
+    </div>
+
+    @if (Model.ReviewDeadline.HasValue)
+    {
+        var due = Model.ReviewDeadline.Value.Date;
+        var daysLeft = (due - DateTime.Now.Date).Days;
+        var overdue = !Model.DeadlineResolved && daysLeft < 0;
+
+        <div class="card shadow-sm p-4 mb-4 @(Model.DeadlineResolved ? "border-success" : (overdue ? "border-danger" : "border-warning"))" style="background:#fff; border-width:2px;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="mb-2">
+                        Task from your supervisor
+                        @if (Model.DeadlineResolved)
+                        {
+                            <span class="badge bg-success ms-2">Done</span>
+                        }
+                        else if (overdue)
+                        {
+                            <span class="badge bg-danger ms-2">Overdue</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark ms-2">@daysLeft day(s) left</span>
+                        }
+                    </h5>
+                    <p class="mb-1">@(string.IsNullOrEmpty(Model.DeadlineTask) ? "Respond to your supervisor''s feedback." : Model.DeadlineTask)</p>
+                    <p class="text-muted mb-0">Due: <strong>@due.ToString("dd MMM yyyy")</strong></p>
+                </div>
+
+                @if (!Model.DeadlineResolved)
+                {
+                    <form asp-action="ResolveDeadline" method="post" class="ms-3">
+                        <input type="hidden" name="proposalId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-success btn-sm">Mark as Done</button>
+                    </form>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="card shadow-sm p-4 mb-4 bg-white">
+        <h5 class="mb-3">GitHub Repository</h5>
+
+        <form asp-action="UpdateRepo" method="post" class="d-flex gap-2 mb-3">
+            <input type="hidden" name="proposalId" value="@Model.Id" />
+            <input name="gitHubRepoUrl" class="form-control" value="@Model.GitHubRepoUrl" placeholder="https://github.com/username/repo" />
+            <button type="submit" class="btn btn-outline-primary">Save</button>
+        </form>
+
+        @if (!string.IsNullOrEmpty(Model.GitHubRepoUrl))
+        {
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="@Model.GitHubRepoUrl" target="_blank">@Model.GitHubRepoUrl</a>
+                <form asp-action="SyncGitHub" method="post">
+                    <input type="hidden" name="proposalId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-dark btn-sm">Sync Commits</button>
+                </form>
+            </div>
+            <p class="text-muted small mb-0 mt-2">The repository must be public for URMS to read its commits.</p>
+        }
+    </div>
+
+    <div class="card shadow-sm p-4 mb-4 bg-white">
+        <h5 class="mb-3">Supervisor Reviews</h5>
+
+        @{
+            var reviews = ViewBag.Reviews as List<LifeNetAssist.MVC.Models.Review>;
+        }
+
+        @if (reviews == null || !reviews.Any())
+        {
+            <div class="alert alert-info mb-0">No reviews from your supervisor yet.</div>
+        }
+        else
+        {
+            foreach (var rv in reviews)
+            {
+                <div class="border-start border-4 border-primary ps-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>@(rv.Supervisor != null ? rv.Supervisor.Name : "Supervisor")</strong>
+                            @if (!string.IsNullOrEmpty(rv.Status))
+                            {
+                                <span class="badge bg-secondary ms-2">@rv.Status</span>
+                            }
+                        </div>
+                        <span class="text-muted small text-nowrap ms-3">@rv.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</span>
+                    </div>
+
+                    <p class="mb-2 mt-2" style="white-space: pre-wrap;">@rv.Feedback</p>
+
+                    @if (rv.Deadline.HasValue)
+                    {
+                        <p class="mb-0 small text-muted">
+                            Task: @(string.IsNullOrEmpty(rv.Task) ? "-" : rv.Task)
+                            &nbsp;|&nbsp; Due: @rv.Deadline.Value.ToString("dd MMM yyyy")
+                        </p>
+                    }
+                </div>
+            }
+        }
+    </div>
+
+    <div class="card shadow-sm p-4 mb-4 bg-white">
+        <h5 class="mb-3">Documents</h5>
+
+        @{
+            var docs = ViewBag.Documents as List<LifeNetAssist.MVC.Models.ResearchDocument>;
+        }
+
+        <form asp-controller="Document" asp-action="Upload" method="post" enctype="multipart/form-data" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="proposalId" value="@Model.Id" />
+            <div class="col-md-4">
+                <label class="form-label small">Category</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="Proposal">Proposal</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Final Thesis">Final Thesis</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small">File</label>
+                <input type="file" name="file" class="form-control form-control-sm" required />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Upload</button>
+            </div>
+        </form>
+        <p class="text-muted small">PDF, DOC, DOCX, PPTX or ZIP. Maximum 20 MB.</p>
+
+        @if (docs == null || !docs.Any())
+        {
+            <div class="alert alert-info mb-0">No documents uploaded yet.</div>
+        }
+        else
+        {
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>File</th>
+                        <th>Category</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var f in docs)
+                {
+                    <tr>
+                        <td>@f.FileName</td>
+                        <td><span class="badge bg-secondary">@f.Category</span></td>
+                        <td>@(Math.Round(f.SizeBytes / 1024.0 / 1024.0, 2)) MB</td>
+                        <td>@f.UploadedAt.ToString("dd MMM yyyy")</td>
+                        <td class="text-end">
+                            <a asp-controller="Document" asp-action="Download" asp-route-id="@f.Id" class="btn btn-sm btn-outline-primary">Download</a>
+                            <form asp-controller="Document" asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm(''Delete this file?'');">
+                                <input type="hidden" name="id" value="@f.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="card shadow-sm p-4 mb-4 bg-white">
+        <h5 class="mb-3">Add Progress Update</h5>
+        <form asp-action="AddProgress" method="post">
+            <input type="hidden" name="proposalId" value="@Model.Id" />
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input name="title" class="form-control" required />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Percent Complete</label>
+                <input name="percentComplete" type="number" min="0" max="100" value="0" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">Add Update</button>
+        </form>
+    </div>
+
+    <h5 class="mb-3">Progress History</h5>
+    @if (Model.ProgressUpdates == null || !Model.ProgressUpdates.Any())
+    {
+        <div class="alert alert-info">No progress updates yet.</div>
+    }
+    else
+    {
+        foreach (var u in Model.ProgressUpdates.OrderByDescending(x => x.CreatedAt))
+        {
+            <div class="card p-3 mb-2 bg-white shadow-sm">
+                <div class="d-flex justify-content-between">
+                    <strong>
+                        @u.Title
+                        @if (!string.IsNullOrEmpty(u.CommitHash))
+                        {
+                            <span class="badge bg-dark ms-2">GitHub</span>
+                        }
+                    </strong>
+                    <span class="text-muted small">@u.CreatedAt.ToString("dd MMM yyyy")</span>
+                </div>
+                <p class="mb-2" style="white-space: pre-wrap;">@u.Description</p>
+                @if (string.IsNullOrEmpty(u.CommitHash))
+                {
+                    <div class="progress" style="height: 18px;">
+                        <div class="progress-bar" role="progressbar" style="width: @(u.PercentComplete)%;">@u.PercentComplete%</div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+
+

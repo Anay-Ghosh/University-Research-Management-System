@@ -1,5 +1,6 @@
 ﻿using LifeNetAssist.MVC.Data;
 using LifeNetAssist.MVC.Models;
+using LifeNetAssist.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,259 +9,199 @@ namespace LifeNetAssist.MVC.Controllers
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly NotificationService _notify;
 
-        public AdminController(ApplicationDbContext context)
+        public AdminController(ApplicationDbContext context, NotificationService notify)
         {
             _context = context;
+            _notify = notify;
         }
 
-        // =========================
-        // ADMIN DASHBOARD
-        // =========================
-        public IActionResult Dashboard()
-        {
-            if (!IsAdmin())
-                return RedirectToAction("Login", "User");
-
-            // Build dashboard stats
-            var model = new AdminDashboardViewModel
-            {
-                TotalRequests = _context.HelpRequests.Count(),
-                PendingRequests = _context.HelpRequests.Count(r => r.Status == "Pending"),
-                AssignedRequests = _context.HelpRequests.Count(r => r.Status == "Assigned"),
-                CompletedRequests = _context.HelpRequests.Count(r => r.Status == "Completed"),
-                TotalVolunteers = _context.Users.Count(u => u.Role == "Volunteer"),
-                ClosestVolunteers = new List<ClosestVolunteerViewModel>()
-            };
-
-            // Compute closest volunteer for pending requests
-            var pendingRequests = _context.HelpRequests
-                .Where(r => r.Status == "Pending")
-                .ToList();
-
-            var volunteers = _context.Users
-                .Where(u => u.Role == "Volunteer")
-                .Include(u => u.VolunteerProfile)
-                .Where(u => u.VolunteerProfile != null)
-                .ToList();
-
-            foreach (var req in pendingRequests)
-            {
-                User? closestVolunteer = null;
-                double minDistance = double.MaxValue;
-
-                foreach (var vol in volunteers)
-                {
-                    if (vol.VolunteerProfile == null) continue;
-
-                    double distance = GetDistance(
-                        req.Latitude,
-                        req.Longitude,
-                        vol.VolunteerProfile.Latitude,
-                        vol.VolunteerProfile.Longitude
-                    );
-
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closestVolunteer = vol;
-                    }
-                }
-
-                if (closestVolunteer != null)
-                {
-                    model.ClosestVolunteers.Add(new ClosestVolunteerViewModel
-                    {
-                        RequesterName = req.RequesterName,
-                        VolunteerName = closestVolunteer.Name,
-                        DistanceKm = Math.Round(minDistance, 2)
-                    });
-                }
-            }
-
-            return View(model);
-        }
-
-        // =========================
-        // VIEW REQUESTS (All / Pending / Assigned / Completed)
-        // =========================
-        public IActionResult Requests(string? status)
-        {
-            if (!IsAdmin())
-                return RedirectToAction("Login", "User");
-
-            var query = _context.HelpRequests
-                .Include(r => r.Requester)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(status))
-                query = query.Where(r => r.Status == status);
-
-            var requestList = query
-                .OrderByDescending(r => r.Id)
-                .ToList()
-                .Select(r =>
-                {
-                    User? assignedVolunteer = null;
-                    double? distanceKm = null;
-
-                    if (r.AssignedVolunteerId != null)
-                    {
-                        assignedVolunteer = _context.Users
-                            .Include(u => u.VolunteerProfile)
-                            .FirstOrDefault(u => u.Id == r.AssignedVolunteerId);
-
-                        if (assignedVolunteer?.VolunteerProfile != null)
-                        {
-                            distanceKm = GetDistance(
-                                r.Latitude,
-                                r.Longitude,
-                                assignedVolunteer.VolunteerProfile.Latitude,
-                                assignedVolunteer.VolunteerProfile.Longitude
-                            );
-                        }
-                    }
-
-                    return new RequestWithVolunteerViewModel
-                    {
-                        Request = r,
-                        AssignedVolunteer = assignedVolunteer,
-                        DistanceKm = distanceKm
-                    };
-                })
-                .ToList();
-
-            ViewBag.Filter = string.IsNullOrEmpty(status) ? "All Requests" : status + " Requests";
-
-            // Explicitly return your existing AllRequest.cshtml
-            return View("AllRequests", requestList);
-        }
-
-        // =========================
-        // VOLUNTEERS LIST
-        // =========================
-        public IActionResult Volunteers()
-        {
-            if (!IsAdmin())
-                return RedirectToAction("Login", "User");
-
-            var volunteers = _context.Users
-                .Where(u => u.Role == "Volunteer")
-                .Include(u => u.VolunteerProfile)
-                .ToList();
-
-            return View(volunteers);
-        }
-
-        // =========================
-        // DELETE VOLUNTEER
-        // =========================
-        public IActionResult DeleteVolunteer(int id)
-        {
-            if (!IsAdmin())
-                return RedirectToAction("Login", "User");
-
-            var volunteer = _context.Users
-                .Include(u => u.VolunteerProfile)
-                .FirstOrDefault(u => u.Id == id && u.Role == "Volunteer");
-
-            if (volunteer == null)
-            {
-                TempData["Error"] = "Volunteer not found.";
-                return RedirectToAction("Volunteers");
-            }
-
-            if (volunteer.VolunteerProfile != null)
-                _context.VolunteerProfiles.Remove(volunteer.VolunteerProfile);
-
-            _context.Users.Remove(volunteer);
-            _context.SaveChanges();
-
-            TempData["Success"] = "Volunteer deleted successfully.";
-            return RedirectToAction("Volunteers");
-        }
-
-        // =========================
-        // ASSIGN VOLUNTEER TO REQUEST (closest distance)
-        // =========================
-        public IActionResult AssignVolunteer(int requestId)
-        {
-            if (!IsAdmin())
-                return RedirectToAction("Login", "User");
-
-            var request = _context.HelpRequests.FirstOrDefault(r => r.Id == requestId);
-
-            if (request == null)
-            {
-                TempData["Error"] = "Help request not found.";
-                return RedirectToAction("Requests");
-            }
-
-            if (request.Status != "Pending")
-            {
-                TempData["Info"] = "Request already assigned.";
-                return RedirectToAction("Requests");
-            }
-
-            var volunteers = _context.Users
-                .Where(u => u.Role == "Volunteer")
-                .Include(u => u.VolunteerProfile)
-                .Where(u => u.VolunteerProfile != null)
-                .ToList();
-
-            if (!volunteers.Any())
-            {
-                TempData["Error"] = "No volunteers available.";
-                return RedirectToAction("Requests");
-            }
-
-            User? closestVolunteer = null;
-            double minDistance = double.MaxValue;
-
-            foreach (var v in volunteers)
-            {
-                double distance = GetDistance(
-                    request.Latitude,
-                    request.Longitude,
-                    v.VolunteerProfile!.Latitude,
-                    v.VolunteerProfile!.Longitude
-                );
-
-                if (distance < minDistance)
-                {
-                    minDistance = distance;
-                    closestVolunteer = v;
-                }
-            }
-
-            if (closestVolunteer != null)
-            {
-                request.AssignedVolunteerId = closestVolunteer.Id;
-                request.Status = "Assigned";
-                _context.SaveChanges();
-
-                TempData["Success"] = $"Volunteer {closestVolunteer.Name} assigned (Distance: {minDistance:F2} km).";
-            }
-
-            return RedirectToAction("Requests");
-        }
-
-        // =========================
-        // HELPER METHODS
-        // =========================
         private bool IsAdmin() => HttpContext.Session.GetString("UserRole") == "Admin";
 
-        private double GetDistance(double lat1, double lon1, double lat2, double lon2)
+        public IActionResult Dashboard()
         {
-            const double R = 6371; // Radius of Earth in km
-            var dLat = ToRad(lat2 - lat1);
-            var dLon = ToRad(lon2 - lon1);
-            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                    Math.Cos(ToRad(lat1)) * Math.Cos(ToRad(lat2)) *
-                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-            return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            if (!IsAdmin()) return RedirectToAction("Login", "User");
+
+            ViewBag.TotalUsers = _context.Users.Count();
+            ViewBag.TotalStudents = _context.Users.Count(u => u.Role == "Student");
+            ViewBag.TotalSupervisors = _context.Users.Count(u => u.Role == "Supervisor");
+            ViewBag.TotalProposals = _context.ResearchProposals.Count();
+            ViewBag.PendingProposals = _context.ResearchProposals.Count(p => p.Status == "Pending");
+            ViewBag.OngoingProposals = _context.ResearchProposals.Count(p => p.Status == "Ongoing");
+            ViewBag.CompletedProposals = _context.ResearchProposals.Count(p => p.Status == "Completed");
+            ViewBag.TotalPublications = _context.Publications.Count();
+
+            return View();
         }
 
-        private double ToRad(double angle) => angle * (Math.PI / 180);
+        public IActionResult Users()
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "User");
+
+            var users = _context.Users.OrderBy(u => u.Role).ThenBy(u => u.Name).ToList();
+            return View(users);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteUser(int id)
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "User");
+
+            var user = _context.Users.Find(id);
+            if (user == null) return NotFound();
+
+            bool hasWork = _context.ResearchProposals.Any(p => p.StudentId == id || p.SupervisorId == id);
+            if (hasWork)
+            {
+                TempData["Error"] = "Cannot delete: this user is linked to existing proposals.";
+                return RedirectToAction("Users");
+            }
+
+            _context.Users.Remove(user);
+            _context.SaveChanges();
+            TempData["Success"] = "User deleted.";
+            return RedirectToAction("Users");
+        }
+
+        public IActionResult Proposals(string? q, string? status, string? department)
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "User");
+
+            var supervisors = _context.Users
+                .Where(u => u.Role == "Supervisor")
+                .OrderBy(u => u.Name)
+                .ToList();
+
+            var profiles = _context.SupervisorProfiles.ToList();
+
+            var loads = _context.ResearchProposals
+                .Where(p => p.SupervisorId != null && p.Status != "Completed" && p.Status != "Rejected")
+                .Select(p => new { p.SupervisorId, p.StudentId })
+                .Distinct()
+                .ToList()
+                .GroupBy(x => x.SupervisorId!.Value)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            ViewBag.Supervisors = supervisors;
+            ViewBag.SupervisorLoads = loads;
+            ViewBag.SupervisorMax = profiles.ToDictionary(p => p.UserId, p => p.MaxStudents);
+
+            var query = _context.ResearchProposals
+                .Include(p => p.Student)
+                .Include(p => p.Supervisor)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = query.Where(p =>
+                    p.Title.Contains(q) ||
+                    (p.Keywords != null && p.Keywords.Contains(q)) ||
+                    (p.Student != null && p.Student.Name.Contains(q)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(p => p.Status == status);
+
+            if (!string.IsNullOrWhiteSpace(department))
+                query = query.Where(p => p.Student != null && p.Student.Department == department);
+
+            var proposals = query
+                .OrderByDescending(p => p.SubmittedAt)
+                .ToList();
+
+            ViewBag.Query = q;
+            ViewBag.Status = status;
+            ViewBag.Department = department;
+
+            ViewBag.Departments = _context.Users
+                .Where(u => u.Department != null && u.Department != "")
+                .Select(u => u.Department!)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+            ViewBag.ResultCount = proposals.Count;
+
+            return View(proposals);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AssignSupervisor(int proposalId, int supervisorId)
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "User");
+
+            var proposal = _context.ResearchProposals.Find(proposalId);
+            if (proposal == null) return NotFound();
+
+            var supervisor = _context.Users.FirstOrDefault(u => u.Id == supervisorId && u.Role == "Supervisor");
+            if (supervisor == null)
+            {
+                TempData["Error"] = "Selected user is not a supervisor.";
+                return RedirectToAction("Proposals");
+            }
+
+            var profile = _context.SupervisorProfiles.FirstOrDefault(s => s.UserId == supervisorId);
+
+            if (profile != null)
+            {
+                int currentLoad = _context.ResearchProposals
+                    .Where(p => p.SupervisorId == supervisorId
+                             && p.Id != proposalId
+                             && p.Status != "Completed"
+                             && p.Status != "Rejected")
+                    .Select(p => p.StudentId)
+                    .Distinct()
+                    .Count();
+
+                if (currentLoad >= profile.MaxStudents)
+                {
+                    TempData["Error"] = supervisor.Name + " is already at capacity ("
+                        + currentLoad + "/" + profile.MaxStudents + " students).";
+                    return RedirectToAction("Proposals");
+                }
+
+                if (!profile.IsAvailable)
+                {
+                    TempData["Error"] = supervisor.Name + " is currently marked as unavailable.";
+                    return RedirectToAction("Proposals");
+                }
+            }
+
+            proposal.SupervisorId = supervisorId;
+            if (proposal.Status == "Pending") proposal.Status = "Ongoing";
+            _context.SaveChanges();
+
+            _notify.Notify(proposal.StudentId,
+                supervisor.Name + " has been assigned as your supervisor for \"" + proposal.Title + "\".",
+                "/Student/Details/" + proposal.Id,
+                "Assignment");
+
+            _notify.Notify(supervisorId,
+                "You have been assigned to supervise \"" + proposal.Title + "\".",
+                "/Supervisor/Review/" + proposal.Id,
+                "Assignment");
+
+            TempData["Success"] = "Supervisor assigned.";
+            return RedirectToAction("Proposals");
+        }
+
+        public IActionResult Publications()
+        {
+            if (!IsAdmin()) return RedirectToAction("Login", "User");
+
+            var pubs = _context.Publications
+                .Include(p => p.Student)
+                .OrderByDescending(p => p.Year)
+                .ToList();
+
+            return View(pubs);
+        }
     }
 }
+
+
+
+

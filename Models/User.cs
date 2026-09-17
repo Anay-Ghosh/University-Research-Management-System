@@ -16,14 +16,17 @@ namespace LifeNetAssist.MVC.Models
         [Required]
         public string Password { get; set; } = null!;
 
-        // "Admin" | "Requester" | "Volunteer"
+        // "Admin" | "Student" | "Supervisor"
         [Required]
         public string Role { get; set; } = null!;
 
-        // Navigation property for requests created by requester
-        public List<HelpRequest>? Requests { get; set; }
+        public string? Department { get; set; }
+        public string? UniversityId { get; set; }
 
-        // One-to-one for VolunteerProfile
-        public VolunteerProfile? VolunteerProfile { get; set; }
+        public string? GitHubUsername { get; set; }
+
+        public List<ResearchProposal>? Proposals { get; set; }
+
+        public SupervisorProfile? SupervisorProfile { get; set; }
     }
 }

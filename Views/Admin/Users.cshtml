@@ -1,0 +1,50 @@
+﻿@model List<LifeNetAssist.MVC.Models.User>
+
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="container mt-4">
+    <a asp-action="Dashboard" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
+    <h2 class="mb-4">All Users</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <table class="table table-hover align-middle bg-white shadow-sm">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>University ID</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Name</td>
+                <td>@u.Email</td>
+                <td><span class="badge bg-secondary">@u.Role</span></td>
+                <td>@(string.IsNullOrEmpty(u.Department) ? "-" : u.Department)</td>
+                <td>@(string.IsNullOrEmpty(u.UniversityId) ? "-" : u.UniversityId)</td>
+                <td>
+                    <form asp-action="DeleteUser" method="post" onsubmit="return confirm(''Delete this user?'');">
+                        <input type="hidden" name="id" value="@u.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

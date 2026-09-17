@@ -1,0 +1,118 @@
+﻿@model List<LifeNetAssist.MVC.Models.ResearchProposal>
+
+@{
+    ViewData["Title"] = "All Proposals";
+    var supervisors = ViewBag.Supervisors as List<LifeNetAssist.MVC.Models.User>;
+}
+
+<div class="container mt-4">
+    <a asp-action="Dashboard" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
+    <h2 class="mb-4">All Research Proposals</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <form method="get" asp-action="Proposals" class="card p-3 mb-4 bg-white shadow-sm">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small">Search</label>
+                <input name="q" value="@ViewBag.Query" class="form-control form-control-sm" placeholder="Title, keyword or student name" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach (var st in new[] { "Pending", "Ongoing", "Approved", "Rejected", "Completed" })
+                    {
+                        <option value="@st" selected="@(ViewBag.Status as string == st)">@st</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Department</label>
+                <select name="department" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @{
+                        var depts = ViewBag.Departments as List<string>;
+                    }
+                    @if (depts != null)
+                    {
+                        foreach (var d in depts)
+                        {
+                            <option value="@d" selected="@(ViewBag.Department as string == d)">@d</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+                <a asp-action="Proposals" class="btn btn-outline-secondary btn-sm">Clear</a>
+            </div>
+        </div>
+    </form>
+
+    <p class="text-muted small">@ViewBag.ResultCount result(s) found.</p>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No proposals submitted yet.</div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Student</th>
+                    <th>Supervisor</th>
+                    <th>Status</th>
+                    <th>Assign Supervisor</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Title</td>
+                    <td>@(p.Student != null ? p.Student.Name : "-")</td>
+                    <td>@(p.Supervisor != null ? p.Supervisor.Name : "Not assigned")</td>
+                    <td><span class="badge bg-secondary">@p.Status</span></td>
+                    <td>
+                        <form asp-action="AssignSupervisor" method="post" class="d-flex gap-2">
+                            <input type="hidden" name="proposalId" value="@p.Id" />
+                            <select name="supervisorId" class="form-select form-select-sm" required>
+                                <option value="">-- Select --</option>
+                                @if (supervisors != null)
+                                {
+                                    var loads = ViewBag.SupervisorLoads as Dictionary<int, int>;
+                                    var maxes = ViewBag.SupervisorMax as Dictionary<int, int>;
+
+                                    foreach (var s in supervisors)
+                                    {
+                                        var load = (loads != null && loads.ContainsKey(s.Id)) ? loads[s.Id] : 0;
+                                        var max = (maxes != null && maxes.ContainsKey(s.Id)) ? maxes[s.Id] : 0;
+                                        var full = max > 0 && load >= max;
+
+                                        <option value="@s.Id" disabled="@full">
+                                            @s.Name (@load/@(max > 0 ? max.ToString() : "-")) @(full ? " - FULL" : "")
+                                        </option>
+                                    }
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Assign</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+
+

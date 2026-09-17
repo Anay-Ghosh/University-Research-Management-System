@@ -1,0 +1,10 @@
+
+appsettings.json
+
+wwwroot/uploads/
+
+bin/
+obj/
+.vs/
+
+*.user

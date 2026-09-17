@@ -1,0 +1,56 @@
+﻿@model List<LifeNetAssist.MVC.Models.ResearchProposal>
+
+@{
+    ViewData["Title"] = "Student Dashboard";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Research</h2>
+        <a asp-controller="Student" asp-action="SubmitProposal" class="btn btn-primary">+ New Proposal</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">You have not submitted any research proposal yet.</div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Supervisor</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Title</td>
+                    <td>@(p.Supervisor != null ? p.Supervisor.Name : "Not assigned")</td>
+                    <td>
+                        <span class="badge bg-secondary">@p.Status</span>
+                    </td>
+                    <td>@p.SubmittedAt.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <a asp-controller="Student" asp-action="Details" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Open</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>

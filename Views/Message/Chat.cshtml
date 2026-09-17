@@ -1,0 +1,55 @@
+﻿@model List<LifeNetAssist.MVC.Models.Message>
+
+@{
+    var other = ViewBag.Other as LifeNetAssist.MVC.Models.User;
+    int myId = ViewBag.MyId;
+    ViewData["Title"] = "Chat with " + (other != null ? other.Name : "");
+}
+
+<div class="container mt-4" style="max-width: 750px;">
+    <a asp-action="Inbox" class="btn btn-sm btn-outline-secondary mb-3">&larr; All Messages</a>
+
+    <div class="card shadow-sm bg-white">
+        <div class="card-header bg-white">
+            <strong>@(other != null ? other.Name : "")</strong>
+            <span class="text-muted small">@(other != null ? other.Role : "")</span>
+        </div>
+
+        <div class="card-body" id="chatBox" style="height: 420px; overflow-y: auto; background:#f8f9fb;">
+            @if (!Model.Any())
+            {
+                <p class="text-muted text-center mt-5">No messages yet. Say hello.</p>
+            }
+            else
+            {
+                foreach (var m in Model)
+                {
+                    var mine = m.SenderId == myId;
+                    <div class="d-flex mb-2 @(mine ? "justify-content-end" : "justify-content-start")">
+                        <div class="p-2 px-3 rounded-3 @(mine ? "bg-primary text-white" : "bg-white border")" style="max-width: 72%;">
+                            <div>@m.Content</div>
+                            <div class="small @(mine ? "text-white-50" : "text-muted")" style="font-size: 0.72rem;">
+                                @m.SentAt.ToString("dd MMM, hh:mm tt")
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="card-footer bg-white">
+            <form asp-action="Send" method="post" class="d-flex gap-2">
+                <input type="hidden" name="receiverId" value="@(other != null ? other.Id : 0)" />
+                <input name="content" class="form-control" placeholder="Type a message..." autocomplete="off" required />
+                <button type="submit" class="btn btn-primary">Send</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var box = document.getElementById("chatBox");
+        if (box) { box.scrollTop = box.scrollHeight; }
+    </script>
+}

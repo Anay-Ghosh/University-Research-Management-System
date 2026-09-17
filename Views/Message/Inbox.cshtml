@@ -1,0 +1,36 @@
+﻿@model List<LifeNetAssist.MVC.Models.User>
+
+@{
+    ViewData["Title"] = "Messages";
+    var unread = ViewBag.UnreadCounts as Dictionary<int, int>;
+}
+
+<div class="container mt-4" style="max-width: 700px;">
+    <h2 class="mb-4">Messages</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            You have no contacts yet. Messaging becomes available once a supervisor is assigned to a research proposal.
+        </div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm">
+        @foreach (var c in Model)
+        {
+            var count = (unread != null && unread.ContainsKey(c.Id)) ? unread[c.Id] : 0;
+            <a asp-action="Chat" asp-route-id="@c.Id" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <strong>@c.Name</strong>
+                    <div class="text-muted small">@c.Role @(string.IsNullOrEmpty(c.Department) ? "" : " - " + c.Department)</div>
+                </div>
+                @if (count > 0)
+                {
+                    <span class="badge bg-danger rounded-pill">@count</span>
+                }
+            </a>
+        }
+        </div>
+    }
+</div>

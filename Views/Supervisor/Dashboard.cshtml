@@ -1,0 +1,100 @@
+﻿@model List<LifeNetAssist.MVC.Models.ResearchProposal>
+
+@{
+    ViewData["Title"] = "Supervisor Dashboard";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Supervised Research</h2>
+        <div class="d-flex gap-2">
+            <a asp-action="Available" class="btn btn-outline-primary">Browse Proposals</a>
+            <a asp-action="Profile" class="btn btn-outline-secondary">My Profile</a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @{
+        bool hasProfile = ViewBag.HasProfile ?? false;
+        int load = ViewBag.CurrentLoad ?? 0;
+        int max = ViewBag.MaxStudents ?? 0;
+        bool available = ViewBag.IsAvailable ?? false;
+    }
+
+    @if (!hasProfile)
+    {
+        <div class="alert alert-warning">
+            You have not set up your supervisor profile yet. You must complete it before accepting students.
+            <a asp-action="Profile" class="alert-link">Set up profile</a>
+        </div>
+    }
+    else
+    {
+        var pct = max > 0 ? (int)Math.Round(load * 100.0 / max) : 0;
+        <div class="card p-3 mb-4 bg-white shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Supervision Capacity</strong>
+                <span>
+                    @load / @max students
+                    @if (!available)
+                    {
+                        <span class="badge bg-secondary ms-2">Not accepting</span>
+                    }
+                    else if (load >= max)
+                    {
+                        <span class="badge bg-danger ms-2">Full</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success ms-2">@(max - load) slot(s) open</span>
+                    }
+                </span>
+            </div>
+            <div class="progress" style="height: 14px;">
+                <div class="progress-bar @(load >= max ? "bg-danger" : "bg-success")" style="width: @(Math.Min(pct, 100))%;"></div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">You are not supervising any research yet. Click "Browse Proposals" to accept one.</div>
+    }
+    else
+    {
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Student</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Title</td>
+                    <td>@(p.Student != null ? p.Student.Name : "-")</td>
+                    <td><span class="badge bg-secondary">@p.Status</span></td>
+                    <td>@p.SubmittedAt.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <a asp-action="Review" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Review</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+

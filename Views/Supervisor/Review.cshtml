@@ -1,0 +1,196 @@
+﻿@model LifeNetAssist.MVC.Models.ResearchProposal
+
+@{
+    ViewData["Title"] = "Review Proposal";
+}
+
+<div class="container mt-4" style="max-width: 900px;">
+    <a asp-action="Dashboard" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
+
+    <div class="card shadow-sm p-4 mb-4 bg-white">
+        <h3>@Model.Title</h3>
+        <p class="text-muted mb-2">
+            Student: @(Model.Student != null ? Model.Student.Name : "-")
+            &nbsp;|&nbsp; Status: <span class="badge bg-secondary">@Model.Status</span>
+        </p>
+        <p><strong>Keywords:</strong> @(string.IsNullOrEmpty(Model.Keywords) ? "-" : Model.Keywords)</p>
+        <hr />
+        <h6>Abstract</h6>
+        <p>@Model.Abstract</p>
+
+        @if (!string.IsNullOrEmpty(Model.GitHubRepoUrl))
+        {
+            <p class="mb-0">
+                <strong>Repository:</strong>
+                <a href="@Model.GitHubRepoUrl" target="_blank">@Model.GitHubRepoUrl</a>
+                <span class="badge bg-dark ms-2">@(Model.ProgressUpdates != null ? Model.ProgressUpdates.Count(x => x.CommitHash != null) : 0) commits synced</span>
+            </p>
+        }
+        else
+        {
+            <p class="text-muted mb-0">No repository linked by the student yet.</p>
+        }
+    </div>
+
+    <div class="card shadow-sm p-4 mb-4 bg-white">
+        <h5 class="mb-3">Documents</h5>
+
+        @{
+            var docs = ViewBag.Documents as List<LifeNetAssist.MVC.Models.ResearchDocument>;
+        }
+
+        <form asp-controller="Document" asp-action="Upload" method="post" enctype="multipart/form-data" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="proposalId" value="@Model.Id" />
+            <div class="col-md-4">
+                <label class="form-label small">Category</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="Other">Reviewed Copy</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Proposal">Proposal</option>
+                    <option value="Final Thesis">Final Thesis</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small">File</label>
+                <input type="file" name="file" class="form-control form-control-sm" required />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Upload</button>
+            </div>
+        </form>
+
+        @if (docs == null || !docs.Any())
+        {
+            <div class="alert alert-info mb-0">The student has not uploaded any document yet.</div>
+        }
+        else
+        {
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>File</th>
+                        <th>Category</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var f in docs)
+                {
+                    <tr>
+                        <td>@f.FileName</td>
+                        <td><span class="badge bg-secondary">@f.Category</span></td>
+                        <td>@(Math.Round(f.SizeBytes / 1024.0 / 1024.0, 2)) MB</td>
+                        <td>@f.UploadedAt.ToString("dd MMM yyyy")</td>
+                        <td class="text-end">
+                            <a asp-controller="Document" asp-action="Download" asp-route-id="@f.Id" class="btn btn-sm btn-outline-primary">Download</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="card shadow-sm p-4 mb-4 bg-white">
+        <h5 class="mb-3">Update Status &amp; Feedback</h5>
+        <form asp-action="Review" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="mb-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="Ongoing" selected="@(Model.Status == "Ongoing")">Ongoing</option>
+                    <option value="Approved" selected="@(Model.Status == "Approved")">Approved</option>
+                    <option value="Rejected" selected="@(Model.Status == "Rejected")">Rejected</option>
+                    <option value="Completed" selected="@(Model.Status == "Completed")">Completed</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Feedback</label>
+                <textarea name="feedback" class="form-control" rows="4">@Model.Feedback</textarea>
+            </div>
+
+            <hr />
+            <h6 class="mb-3">Deadline for the student to respond</h6>
+
+            <div class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <label class="form-label">Due date</label>
+                    <input name="reviewDeadline" type="date" class="form-control"
+                           value="@(Model.ReviewDeadline.HasValue ? Model.ReviewDeadline.Value.ToString("yyyy-MM-dd") : "")" />
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label">What must they do?</label>
+                    <input name="deadlineTask" class="form-control" value="@Model.DeadlineTask"
+                           placeholder="e.g. Revise Chapter 3 and re-upload" />
+                </div>
+            </div>
+
+            @if (Model.ReviewDeadline.HasValue)
+            {
+                <div class="alert @(Model.DeadlineResolved ? "alert-success" : (Model.ReviewDeadline.Value.Date < DateTime.Now.Date ? "alert-danger" : "alert-info")) py-2">
+                    Current deadline: <strong>@Model.ReviewDeadline.Value.ToString("dd MMM yyyy")</strong>
+                    @if (Model.DeadlineResolved)
+                    {
+                        <span> - marked as done by the student.</span>
+                    }
+                    else if (Model.ReviewDeadline.Value.Date < DateTime.Now.Date)
+                    {
+                        <span> - <strong>OVERDUE</strong>.</span>
+                    }
+                    else
+                    {
+                        <span> - @((Model.ReviewDeadline.Value.Date - DateTime.Now.Date).Days) day(s) remaining.</span>
+                    }
+                </div>
+            }
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Save Review</button>
+            </div>
+        </form>
+
+        @if (Model.ReviewDeadline.HasValue)
+        {
+            <form asp-action="ClearDeadline" method="post" class="mt-2">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-outline-danger btn-sm">Remove Deadline</button>
+            </form>
+        }
+
+    </div>
+
+    <h5 class="mb-3">Student Progress</h5>
+    @if (Model.ProgressUpdates == null || !Model.ProgressUpdates.Any())
+    {
+        <div class="alert alert-info">No progress updates submitted yet.</div>
+    }
+    else
+    {
+        foreach (var u in Model.ProgressUpdates.OrderByDescending(x => x.CreatedAt))
+        {
+            <div class="card p-3 mb-2 bg-white shadow-sm">
+                <div class="d-flex justify-content-between">
+                    <strong>
+                        @u.Title
+                        @if (!string.IsNullOrEmpty(u.CommitHash))
+                        {
+                            <span class="badge bg-dark ms-2">GitHub</span>
+                        }
+                    </strong>
+                    <span class="text-muted small">@u.CreatedAt.ToString("dd MMM yyyy")</span>
+                </div>
+                <p class="mb-2">@u.Description</p>
+                <div class="progress" style="height: 18px;">
+                    <div class="progress-bar" role="progressbar" style="width: @(u.PercentComplete)%;">@u.PercentComplete%</div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+
+
+
+

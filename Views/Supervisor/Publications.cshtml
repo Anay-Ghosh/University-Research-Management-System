@@ -1,0 +1,89 @@
+﻿@model List<LifeNetAssist.MVC.Models.Publication>
+
+@{
+    ViewData["Title"] = "Student Publications";
+}
+
+<div class="container mt-4">
+    <a asp-action="Dashboard" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back</a>
+    <h2 class="mb-4">My Students'' Publications</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Your students have not recorded any publication yet.</div>
+    }
+    else
+    {
+        foreach (var p in Model)
+        {
+            <div class="card p-4 mb-3 bg-white shadow-sm">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1">
+                            @p.Title
+                            @if (p.IsVerified)
+                            {
+                                <span class="badge bg-success ms-2">Verified</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark ms-2">Pending</span>
+                            }
+                        </h5>
+                        <div class="text-muted small mb-2">@p.Authors</div>
+                        <p class="mb-1">
+                            <strong>Student:</strong> @(p.Student != null ? p.Student.Name : "-")
+                            &nbsp;|&nbsp; <strong>Type:</strong> @(string.IsNullOrEmpty(p.Type) ? "-" : p.Type)
+                            &nbsp;|&nbsp; <strong>Year:</strong> @(p.Year.HasValue ? p.Year.ToString() : "-")
+                        </p>
+                        <p class="mb-1"><strong>Venue:</strong> @(string.IsNullOrEmpty(p.Venue) ? "-" : p.Venue)</p>
+                        @if (!string.IsNullOrEmpty(p.DOI))
+                        {
+                            <p class="mb-1"><strong>DOI:</strong> @p.DOI</p>
+                        }
+                        @if (!string.IsNullOrEmpty(p.Url))
+                        {
+                            <p class="mb-1"><a href="@p.Url" target="_blank">Open publication</a></p>
+                        }
+                        @if (p.Proposal != null)
+                        {
+                            <p class="mb-1"><strong>Research:</strong> @p.Proposal.Title</p>
+                        }
+                        @if (p.IsVerified && !string.IsNullOrEmpty(p.VerifierRemarks))
+                        {
+                            <div class="alert alert-light border mt-2 mb-0">
+                                <strong>Your remarks:</strong> @p.VerifierRemarks
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <hr />
+
+                @if (!p.IsVerified)
+                {
+                    <form asp-action="VerifyPublication" method="post" class="d-flex gap-2 align-items-end">
+                        <input type="hidden" name="id" value="@p.Id" />
+                        <div class="flex-grow-1">
+                            <label class="form-label small">Remarks (optional)</label>
+                            <input name="remarks" class="form-control form-control-sm" placeholder="e.g. Confirmed, I am a co-author" />
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                    </form>
+                }
+                else
+                {
+                    <form asp-action="UnverifyPublication" method="post">
+                        <input type="hidden" name="id" value="@p.Id" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Remove Verification</button>
+                    </form>
+                }
+            </div>
+        }
+    }
+</div>

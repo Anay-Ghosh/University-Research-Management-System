@@ -4,6 +4,7 @@ using LifeNetAssist.MVC.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeNetAssist.MVC.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260824215820_AddNotifications")]
+    partial class AddNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -242,12 +245,6 @@ namespace LifeNetAssist.MVC.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("DeadlineResolved")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("DeadlineTask")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Feedback")
                         .HasColumnType("nvarchar(max)");
 
@@ -256,9 +253,6 @@ namespace LifeNetAssist.MVC.Migrations
 
                     b.Property<string>("Keywords")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ReviewDeadline")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -284,48 +278,6 @@ namespace LifeNetAssist.MVC.Migrations
                     b.HasIndex("SupervisorId");
 
                     b.ToTable("ResearchProposals");
-                });
-
-            modelBuilder.Entity("LifeNetAssist.MVC.Models.Review", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("Deadline")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Feedback")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProposalId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Resolved")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("SupervisorId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Task")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProposalId");
-
-                    b.HasIndex("SupervisorId");
-
-                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("LifeNetAssist.MVC.Models.SupervisorProfile", b =>
@@ -500,25 +452,6 @@ namespace LifeNetAssist.MVC.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Student");
-
-                    b.Navigation("Supervisor");
-                });
-
-            modelBuilder.Entity("LifeNetAssist.MVC.Models.Review", b =>
-                {
-                    b.HasOne("LifeNetAssist.MVC.Models.ResearchProposal", "Proposal")
-                        .WithMany()
-                        .HasForeignKey("ProposalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LifeNetAssist.MVC.Models.User", "Supervisor")
-                        .WithMany()
-                        .HasForeignKey("SupervisorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Proposal");
 
                     b.Navigation("Supervisor");
                 });
